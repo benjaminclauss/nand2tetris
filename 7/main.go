@@ -9,7 +9,8 @@ import (
 )
 
 func main() {
-	input, err := os.Open(os.Args[0])
+	input, err := os.Open(os.Args[1])
+	fmt.Println(os.Args[1])
 	fmt.Println(err)
 	parser := vm.NewParser(input)
 	output, err := os.Create("output.asm")
@@ -17,6 +18,8 @@ func main() {
 	writer := vm.NewCodeWriter(output)
 	for parser.HasMoreCommands() {
 		parser.Advance()
+		fmt.Println("yo")
+		fmt.Println(parser.CommandType())
 		switch parser.CommandType() {
 		case vm.CArithmetic:
 			writer.WriteArithmetic(parser.Arg1())
