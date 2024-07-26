@@ -14,8 +14,6 @@ type CodeWriter struct {
 
 // NewCodeWriter opens the output stream and gets ready to write to it.
 func NewCodeWriter(output io.WriteCloser) *CodeWriter {
-	message := "@256\nD=A\n@SP\nM=D\n"
-	io.WriteString(output, message)
 	return &CodeWriter{output: output}
 }
 
@@ -64,6 +62,13 @@ func (cw *CodeWriter) writeComparison(command string) {
 		"0;JMP\n("+comp+".true."+count+")\n@SP\nA=M-1\n"+
 		"M=-1\n("+comp+".after."+count+")\n")
 }
+
+// Stage II: Memory Access Commands The next version of your translator should include a full implementation of the VM language’s push and
+// pop commands, handling all eight memory segments. We suggest breaking this stage into the following substages:
+// 0. You have already handled the constant segment.
+// 1. Next, handle the segments local, argument, this, and that.
+// 2. Next, handle the pointer and temp segments, in particular allowing modification of the bases of the this and that segments.
+// 3. Finally, handle the static segment.
 
 // WritePushPop writes the assembly code that is the translation of the given command where command is either CPush or CPop.
 func (cw *CodeWriter) WritePushPop(command CommandType, segment string, index int) {
