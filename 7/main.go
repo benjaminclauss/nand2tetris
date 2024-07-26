@@ -18,8 +18,6 @@ func main() {
 	writer := vm.NewCodeWriter(output)
 	for parser.HasMoreCommands() {
 		parser.Advance()
-		fmt.Println("yo")
-		fmt.Println(parser.CommandType())
 		switch parser.CommandType() {
 		case vm.CArithmetic:
 			writer.WriteArithmetic(parser.Arg1())
