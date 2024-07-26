@@ -3,14 +3,12 @@ package virtualmachine
 import (
 	"io"
 	"strconv"
-	"strings"
 )
 
 // A CodeWriter translates VM commands into Hack assembly code.
 type CodeWriter struct {
-	output   io.WriteCloser
-	filename string
-	boolean  int
+	output  io.WriteCloser
+	boolean int
 }
 
 // NewCodeWriter opens the output stream and gets ready to write to it.
@@ -21,9 +19,7 @@ func NewCodeWriter(output io.WriteCloser) *CodeWriter {
 }
 
 // SetFileName informs the CodeWriter that the translation of a new VM file is started.
-func (cw *CodeWriter) SetFileName(filename string) {
-	cw.filename = filename
-}
+func (cw *CodeWriter) SetFileName(filename string) {}
 
 // The VM represents true. and false. as -1 (minus one, 0xFFFF) and 0 (zero, 0x0000), respectively.
 
@@ -31,11 +27,25 @@ func (cw *CodeWriter) SetFileName(filename string) {
 func (cw *CodeWriter) WriteArithmetic(command string) {
 	switch command {
 	case "add":
-		io.WriteString(cw.output, writeBinaryOperation("+"))
+		// Decrement stack pointer.
+		io.WriteString(cw.output, "@SP\nM=M-1\n")
+		// Store first operand.
+		io.WriteString(cw.output, "A=M\nD=M\n")
+		// Operate.
+		io.WriteString(cw.output, "A=A-1\n")
+		io.WriteString(cw.output, "M=D+M\n")
 	case "sub":
-		io.WriteString(cw.output, writeBinaryOperation("-"))
+		// Decrement stack pointer.
+		io.WriteString(cw.output, "@SP\nM=M-1\n")
+		// Store first operand.
+		io.WriteString(cw.output, "A=M\nD=M\n")
+		// Operate.
+		io.WriteString(cw.output, "A=A-1\n")
+		io.WriteString(cw.output, "M=M-D\n")
 	case "neg":
-		io.WriteString(cw.output, writeUnaryOperation("-"))
+		io.WriteString(cw.output, "@SP\nA=M\n")
+		io.WriteString(cw.output, "A=A-1\n")
+		io.WriteString(cw.output, "M=-M\n")
 	case "eq":
 		cw.boolean += 1
 		comp := "EQ"
@@ -64,40 +74,27 @@ func (cw *CodeWriter) WriteArithmetic(command string) {
 			"0;JMP\n("+comp+".true."+count+")\n@SP\nA=M-1\n"+
 			"M=-1\n("+comp+".after."+count+")\n")
 	case "and":
-		io.WriteString(cw.output, writeBinaryOperation("&"))
+		// Decrement stack pointer.
+		io.WriteString(cw.output, "@SP\nM=M-1\n")
+		// Store first operand.
+		io.WriteString(cw.output, "A=M\nD=M\n")
+		// Operate.
+		io.WriteString(cw.output, "A=A-1\n")
+		io.WriteString(cw.output, "M=D&M\n")
 	case "or":
-		io.WriteString(cw.output, writeBinaryOperation("|"))
+		// Decrement stack pointer.
+		io.WriteString(cw.output, "@SP\nM=M-1\n")
+		// Store first operand.
+		io.WriteString(cw.output, "A=M\nD=M\n")
+		// Operate.
+		io.WriteString(cw.output, "A=A-1\n")
+		io.WriteString(cw.output, "M=D|M\n")
 	case "not":
-		io.WriteString(cw.output, writeUnaryOperation("!"))
+		io.WriteString(cw.output, "@SP\nA=M\n")
+		io.WriteString(cw.output, "A=A-1\n")
+		io.WriteString(cw.output, "M=!M\n")
 	}
 }
-
-func writeBinaryOperation(operator string) string {
-	var sb strings.Builder
-	// Decrement stack pointer.
-	sb.WriteString("@SP\n")
-	sb.WriteString("M=M-1")
-	// Store first operand.
-	sb.WriteString("A=M\n")
-	sb.WriteString("D=M\n")
-	// Operate.
-	sb.WriteString("A=A-1\n")
-	sb.WriteString("M=D" + operator + "M\n")
-	return sb.String()
-}
-
-func writeUnaryOperation(operator string) string {
-	var sb strings.Builder
-	sb.WriteString("@SP\n")
-	sb.WriteString("A=M\n")
-	sb.WriteString("A=A-1\n")
-	sb.WriteString("M=" + operator + "M\n")
-	return sb.String()
-}
-
-// 1. Next, handle the segments local, argument, this, and that.
-// 2. Next, handle the pointer and temp segments, in particular allowing modification of the bases of the this and that segments.
-// 3. Finally, handle the static segment.
 
 // WritePushPop writes the assembly code that is the translation of the given command where command is either CPush or CPop.
 func (cw *CodeWriter) WritePushPop(command CommandType, segment string, index int) {
