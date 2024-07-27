@@ -1,4 +1,4 @@
-package main
+package command
 
 import (
 	"bytes"
@@ -9,9 +9,11 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	assembler "github.com/benjaminclauss/nand2tetris/assembler"
 )
 
-var rootCmd = &cobra.Command{
+var assemblerCmd = &cobra.Command{
 	Use:   "assembler [.asm file]",
 	Short: "Assembler for Hack programs",
 	Args:  cobra.ExactArgs(1),
@@ -40,16 +42,16 @@ func Assemble(input io.Reader, output io.Writer) error {
 	var buf bytes.Buffer
 	tee := io.TeeReader(input, &buf)
 
-	st := NewSymbolTable()
+	st := assembler.NewSymbolTable()
 	initializeSymbolTable(st)
-	firstPassParser := NewParser(tee)
+	firstPassParser := assembler.NewParser(tee)
 	currentROMAddress := 0
 	for firstPassParser.hasMoreCommands() {
 		switch firstPassParser.commandType() {
-		case L_COMMAND:
+		case assembler.L_COMMAND:
 			symbol := firstPassParser.symbol()
 			st.addEntry(symbol, currentROMAddress)
-		case C_COMMAND, A_COMMAND:
+		case assembler.C_COMMAND, assembler.A_COMMAND:
 			currentROMAddress++
 		}
 		firstPassParser.advance()
@@ -114,12 +116,5 @@ func initializeSymbolTable(st *SymbolTable) {
 	}
 	for symbol, address := range predefinedSymbols {
 		st.addEntry(symbol, address)
-	}
-}
-
-func main() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
 	}
 }
