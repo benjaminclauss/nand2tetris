@@ -53,6 +53,7 @@ func (cw *CodeWriter) writeUnaryOperation(command string) {
 	io.WriteString(cw.output, "M="+result+"\n")
 }
 
+// TODO: Clean.
 func (cw *CodeWriter) writeComparison(command string) {
 	cw.boolean += 1
 	comp := strings.ToUpper(command)
@@ -72,6 +73,7 @@ func (cw *CodeWriter) writeComparison(command string) {
 // 3. Finally, handle the static segment.
 
 // WritePushPop writes the assembly code that is the translation of the given command where command is either CPush or CPop.
+// TODO: Dry.
 func (cw *CodeWriter) WritePushPop(command CommandType, segment string, index int) {
 	if command == CPush {
 		if segment == "constant" {
