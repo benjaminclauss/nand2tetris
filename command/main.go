@@ -13,7 +13,7 @@ var vmTranslatorCommand = &cobra.Command{
 	Use:  "vmtranslator [.vm file]",
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		input, err := os.Open(os.Args[1])
+		input, err := os.Open(args[0])
 		if err != nil {
 			return err
 		}
