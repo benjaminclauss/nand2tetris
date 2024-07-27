@@ -2,6 +2,7 @@ package virtualmachine
 
 import (
 	"io"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -85,8 +86,61 @@ func (cw *CodeWriter) WritePushPop(command CommandType, segment string, index in
 			io.WriteString(cw.output, "@SP\n")
 			io.WriteString(cw.output, "M=M+1\n")
 		}
+		if slices.Contains([]string{"local", "argument", "this", "that", "temp"}, segment) {
+			name := map[string]string{"local": "LCL", "argument": "ARG", "this": "THIS", "that": "THAT", "temp": "5"}[segment]
+			// Get address of segment.
+			io.WriteString(cw.output, "@"+name+"\n")
+			which := "M"
+			if segment == "temp" {
+				which = "A"
+			}
+			io.WriteString(cw.output, "D="+which+"\n")
+			// Add offset.
+			io.WriteString(cw.output, "@"+strconv.Itoa(index)+"\n")
+			io.WriteString(cw.output, "D=D+A\n")
+			// Store value in register.
+			io.WriteString(cw.output, "A=D\n")
+			io.WriteString(cw.output, "D=M\n")
+			// Push value to stack.
+			io.WriteString(cw.output, "@SP\n")
+			io.WriteString(cw.output, "A=M\n")
+			io.WriteString(cw.output, "M=D\n")
+			// Increment stack pointer.
+			io.WriteString(cw.output, "@SP\n")
+			io.WriteString(cw.output, "M=M+1\n")
+		}
+	}
+	if command == CPop {
+		name := map[string]string{"local": "LCL", "argument": "ARG", "this": "THIS", "that": "THAT", "temp": "5"}[segment]
+		if slices.Contains([]string{"local", "argument", "this", "that", "temp"}, segment) {
+			io.WriteString(cw.output, "@"+name+"\n")
+			which := "M"
+			if segment == "temp" {
+				which = "A"
+			}
+			io.WriteString(cw.output, "D="+which+"\n")
+			// Add offset.
+			io.WriteString(cw.output, "@"+strconv.Itoa(index)+"\n")
+			io.WriteString(cw.output, "D=D+A\n")
+			// Save for later.
+			io.WriteString(cw.output, "@13\n")
+			io.WriteString(cw.output, "M=D\n")
+			// Decrement stack pointer.
+			io.WriteString(cw.output, "@SP\nM=M-1\n")
+			// Store value.
+			io.WriteString(cw.output, "A=M\nD=M\n")
+			// Point at segment.
+			io.WriteString(cw.output, "@13\n")
+			io.WriteString(cw.output, "A=M\n")
+			// Save value.
+			io.WriteString(cw.output, "M=D\n")
+		}
 	}
 }
+
+// local, argument, this, that: Each one of these segments is mapped directly on the RAM, and its location is maintained by keeping its physical base address in a dedicated register
+// (LCL, ARG, THIS, and THAT, respectively). Thus any access to the ith entry of any one of these segments should be translated to assembly code that accesses address (base + i)
+// in the RAM, where base is the current value stored in the register dedicated to the respective segment.
 
 // Close closes the output stream.
 func (cw *CodeWriter) Close() error {
