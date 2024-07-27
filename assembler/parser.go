@@ -1,4 +1,4 @@
-package main
+package assembler
 
 import (
 	"bufio"
@@ -45,19 +45,19 @@ func NewParser(input io.Reader) *Parser {
 		moreCommands:   true,
 		currentCommand: "",
 	}
-	p.advance()
+	p.Advance()
 	return p
 }
 
 // Are there more commands in the input?
-func (p *Parser) hasMoreCommands() bool {
+func (p *Parser) HasMoreCommands() bool {
 	return p.moreCommands
 }
 
 // Reads the next command from the input and makes it the current command.
 // Should be called only if hasMoreCommands() is true.
 // Initially there is no current command.
-func (p *Parser) advance() {
+func (p *Parser) Advance() {
 	if !p.moreCommands {
 		return
 	}
@@ -67,14 +67,14 @@ func (p *Parser) advance() {
 	}
 	p.currentCommand = strings.TrimSpace(p.scanner.Text())
 	if len(p.currentCommand) == 0 {
-		p.advance()
+		p.Advance()
 	} else if strings.HasPrefix(p.currentCommand, COMMENT_PREFIX) {
-		p.advance()
+		p.Advance()
 	}
 }
 
 // Returns the type of the current command.
-func (p *Parser) commandType() CommandType {
+func (p *Parser) CommandType() CommandType {
 	switch {
 	case A_COMMAND_PATTERN.MatchString(p.currentCommand):
 		return A_COMMAND
@@ -89,7 +89,7 @@ func (p *Parser) commandType() CommandType {
 
 // Returns the symbol or decimal Xxx of the current command @Xxx or (Xxx).
 // Should be called only when commandType() is A_COMMAND or L_COMMAND.
-func (p *Parser) symbol() string {
+func (p *Parser) Symbol() string {
 	if A_COMMAND_PATTERN.MatchString(p.currentCommand) {
 		split := strings.Split(p.currentCommand, "@")
 		addr := split[1]
@@ -104,18 +104,18 @@ func (p *Parser) symbol() string {
 
 // Returns the dest mnemonic in the current C-command (8 possibilities).
 // Should be called only when commandType() is C_COMMAND.
-func (p *Parser) dest() string {
+func (p *Parser) Dest() string {
 	return C_COMMAND_PATTERN.FindStringSubmatch(p.currentCommand)[1]
 }
 
 // Returns the comp mnemonic in the current C-command (28 possibilities).
 // Should be called only when commandType() is C_COMMAND.
-func (p *Parser) comp() string {
+func (p *Parser) Comp() string {
 	return C_COMMAND_PATTERN.FindStringSubmatch(p.currentCommand)[2]
 }
 
 // Returns the jump mnemonic in the current C-command (8 possibilities).
 // Should be called only when commandType() is C_COMMAND.
-func (p *Parser) jump() string {
+func (p *Parser) Jump() string {
 	return C_COMMAND_PATTERN.FindStringSubmatch(p.currentCommand)[3]
 }

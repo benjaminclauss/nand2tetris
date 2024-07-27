@@ -1,4 +1,4 @@
-package main
+package assembler
 
 // Keeps a correspondence between symbolic labels and numeric addresses.
 type SymbolTable struct {
@@ -11,12 +11,12 @@ func NewSymbolTable() *SymbolTable {
 }
 
 // Adds the pair (symbol, address) to the table.
-func (st *SymbolTable) addEntry(symbol string, address int) {
+func (st *SymbolTable) AddEntry(symbol string, address int) {
 	st.symbols[symbol] = address
 }
 
 // Does the symbol table contain the given symbol?
-func (st *SymbolTable) contains(symbol string) bool {
+func (st *SymbolTable) Contains(symbol string) bool {
 	_, containsSymbol := st.symbols[symbol]
 	return containsSymbol
 }

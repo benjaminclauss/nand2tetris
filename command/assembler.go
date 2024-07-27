@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	assembler "github.com/benjaminclauss/nand2tetris/assembler"
+	"github.com/benjaminclauss/nand2tetris/assembler"
 )
 
 var assemblerCmd = &cobra.Command{
@@ -46,49 +46,49 @@ func Assemble(input io.Reader, output io.Writer) error {
 	initializeSymbolTable(st)
 	firstPassParser := assembler.NewParser(tee)
 	currentROMAddress := 0
-	for firstPassParser.hasMoreCommands() {
-		switch firstPassParser.commandType() {
+	for firstPassParser.HasMoreCommands() {
+		switch firstPassParser.CommandType() {
 		case assembler.L_COMMAND:
-			symbol := firstPassParser.symbol()
-			st.addEntry(symbol, currentROMAddress)
+			symbol := firstPassParser.Symbol()
+			st.AddEntry(symbol, currentROMAddress)
 		case assembler.C_COMMAND, assembler.A_COMMAND:
 			currentROMAddress++
 		}
-		firstPassParser.advance()
+		firstPassParser.Advance()
 	}
 
-	secondPassParser := NewParser(&buf)
+	secondPassParser := assembler.NewParser(&buf)
 	nextAvailableRAMAddress := 16
 
-	for secondPassParser.hasMoreCommands() {
-		switch secondPassParser.commandType() {
-		case A_COMMAND:
-			symbol := secondPassParser.symbol()
+	for secondPassParser.HasMoreCommands() {
+		switch secondPassParser.CommandType() {
+		case assembler.A_COMMAND:
+			symbol := secondPassParser.Symbol()
 			if number, err := strconv.Atoi(symbol); err == nil {
 				io.WriteString(output, fmt.Sprintf("0%015b\n", number))
 			} else {
-				if st.contains(symbol) {
+				if st.Contains(symbol) {
 					address := st.GetAddress(symbol)
 					io.WriteString(output, fmt.Sprintf("0%015b\n", address))
 				} else {
-					st.addEntry(symbol, nextAvailableRAMAddress)
+					st.AddEntry(symbol, nextAvailableRAMAddress)
 					io.WriteString(output, fmt.Sprintf("0%015b\n", nextAvailableRAMAddress))
 					nextAvailableRAMAddress++
 				}
 			}
-		case C_COMMAND:
-			comp := comp(secondPassParser.comp())
-			dest := dest(secondPassParser.dest())
-			jump := jump(secondPassParser.jump())
+		case assembler.C_COMMAND:
+			comp := assembler.Comp(secondPassParser.Comp())
+			dest := assembler.Dest(secondPassParser.Dest())
+			jump := assembler.Jump(secondPassParser.Jump())
 			io.WriteString(output, fmt.Sprintf("111%s%s%s\n", comp, dest, jump))
 		}
-		secondPassParser.advance()
+		secondPassParser.Advance()
 	}
 	return nil
 }
 
 // Initialize the symbol table with all the predefined symbols and their pre-allocated RAM addresses.
-func initializeSymbolTable(st *SymbolTable) {
+func initializeSymbolTable(st *assembler.SymbolTable) {
 	predefinedSymbols := map[string]int{
 		"SP":     0,
 		"LCL":    1,
@@ -115,6 +115,6 @@ func initializeSymbolTable(st *SymbolTable) {
 		"KBD":    24576,
 	}
 	for symbol, address := range predefinedSymbols {
-		st.addEntry(symbol, address)
+		st.AddEntry(symbol, address)
 	}
 }

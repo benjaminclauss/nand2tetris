@@ -1,4 +1,4 @@
-package main
+package assembler
 
 // Translates Hack assembly language mnemonics into binary codes.
 
@@ -58,16 +58,16 @@ var (
 )
 
 // Returns the binary code of the dest mnemonic.
-func dest(mnemonic string) string {
+func Dest(mnemonic string) string {
 	return destinations[mnemonic]
 }
 
 // Returns the binary code of the comp mnemonic.
-func comp(mnemonic string) string {
+func Comp(mnemonic string) string {
 	return computations[mnemonic]
 }
 
 // Returns the binary code of the jump mnemonic.
-func jump(mnemonic string) string {
+func Jump(mnemonic string) string {
 	return jumps[mnemonic]
 }
