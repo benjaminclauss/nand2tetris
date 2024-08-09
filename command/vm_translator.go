@@ -1,8 +1,11 @@
 package command
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -10,28 +13,51 @@ import (
 )
 
 var vmTranslatorCommand = &cobra.Command{
-	Use:  "vmtranslator [.vm file]",
+	Use: "vmtranslator <source>",
+	Long: `
+The VM translator accepts a single command line parameter, as follows:
+
+prompt> VMtranslator source
+
+Where source is either a file name of the form Xxx.vm (the extension is mandatory)
+or a directory name containing one or more .vm files (in which case there is no extension).
+	`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// TODO: Validate input.
-		// The VM translator should accept a single command line parameter, as follows:
-		// prompt> VMtranslator source
-		// Where source is either a file name of the form Xxx.vm (the extension is mandatory)
-		// or a directory name containing one or more .vm files (in which case there is no extension).
-		input, err := os.Open(args[0])
+		info, err := os.Stat(args[0])
+		if err != nil {
+			return fmt.Errorf("error getting FileInfo: %w", err)
+		}
+		if info.IsDir() {
+			entries, err := os.ReadDir(args[0])
+			if err != nil {
+				return err
+			}
+			var vmFiles []string
+			for _, entry := range entries {
+				if strings.HasSuffix(entry.Name(), ".vm") {
+					vmFiles = append(vmFiles, filepath.Join(args[0]+"/", entry.Name()))
+				}
+			}
+			return translate(info.Name()+".asm", vmFiles...)
+		}
+		return translate(strings.TrimRight(filepath.Base(args[0]), ".vm")+".asm", args[0])
+	},
+}
+
+func translate(outputFilename string, files ...string) error {
+	output, err := os.Create(outputFilename)
+	if err != nil {
+		return err
+	}
+	writer := vm.NewCodeWriter(output)
+
+	for _, file := range files {
+		vmf, err := os.Open(file)
 		if err != nil {
 			return err
 		}
-		parser := vm.NewParser(input)
-		// TODO: Name output appropriately.
-		// The result of the translation is always a single assembly language file named Xxx.asm, created in the same directory as
-		// the input Xxx. The translated code must conform to the standard VM mapping on the Hack platform.
-		output, err := os.Create("output.asm")
-		if err != nil {
-			return err
-		}
-		// TODO: Handle multiple files.
-		writer := vm.NewCodeWriter(output)
+		parser := vm.NewParser(vmf)
 		for parser.HasMoreCommands() {
 			parser.Advance()
 			switch parser.CommandType() {
@@ -45,6 +71,6 @@ var vmTranslatorCommand = &cobra.Command{
 				writer.WritePushPop(vm.CPop, parser.Arg1(), index)
 			}
 		}
-		return nil
-	},
+	}
+	return nil
 }
