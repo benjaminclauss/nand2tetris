@@ -166,6 +166,42 @@ func (cw *CodeWriter) WritePushPop(command CommandType, segment string, index in
 // (LCL, ARG, THIS, and THAT, respectively). Thus any access to the ith entry of any one of these segments should be translated to assembly code that accesses address (base + i)
 // in the RAM, where base is the current value stored in the register dedicated to the respective segment.
 
+// WriteInit writes assembly code that effects the VM initialization, also called bootstrap code.
+// This code must be placed at the beginning of the output file.
+func (cw *CodeWriter) WriteInit() error {
+	return nil
+}
+
+// WriteLabel writes assembly code that effects the label command.
+func (cw *CodeWriter) WriteLabel(label string) error {
+	return nil
+}
+
+// WriteGoto writes assembly code that effects the goto command.
+func (cw *CodeWriter) WriteGoto(label string) error {
+	return nil
+}
+
+// Writes assembly code that effects the if-goto command.
+func (cw *CodeWriter) WriteIf(label string) error {
+	return nil
+}
+
+// Writes assembly code that effects the call command.
+func (cw *CodeWriter) writeCall(functionName string, numArgs int) error {
+	return nil
+}
+
+// Writes assembly code that effects the return command.
+func (cw *CodeWriter) WriteReturn(functionName string, numLocals int) error {
+	return nil
+}
+
+// Writes assembly code that effects the function command.
+func (cw *CodeWriter) WriteFunction(functionName string, numLocals int) error {
+	return nil
+}
+
 // Close closes the output stream.
 func (cw *CodeWriter) Close() error {
 	return cw.output.Close()
