@@ -1,6 +1,7 @@
 package virtualmachine
 
 import (
+	"fmt"
 	"io"
 	"slices"
 	"strconv"
@@ -174,7 +175,8 @@ func (cw *CodeWriter) WriteInit() error {
 
 // WriteLabel writes assembly code that effects the label command.
 func (cw *CodeWriter) WriteLabel(label string) error {
-	return nil
+	_, err := io.WriteString(cw.output, fmt.Sprintf("(%s)\n", label))
+	return err
 }
 
 // WriteGoto writes assembly code that effects the goto command.
