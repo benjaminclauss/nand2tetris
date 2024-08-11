@@ -69,6 +69,10 @@ func translate(outputFilename string, files ...string) error {
 			case vm.CPop:
 				index, _ := strconv.Atoi(parser.Arg2())
 				writer.WritePushPop(vm.CPop, parser.Arg1(), index)
+			case vm.CLabel:
+				writer.WriteLabel(parser.Arg1())
+			case vm.CIf:
+				writer.WriteIf(parser.Arg1())
 			}
 		}
 	}

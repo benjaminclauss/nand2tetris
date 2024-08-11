@@ -184,8 +184,20 @@ func (cw *CodeWriter) WriteGoto(label string) error {
 	return nil
 }
 
-// Writes assembly code that effects the if-goto command.
+// WriteIf writes assembly code that effects the if-goto command.
+//
+// This command effects a conditional goto operation.
+// The stack’s topmost value is popped.
+// If the value is not zero, execution continues from the location marked by the label.
+// Otherwise, execution continues from the next command in the program.
+// The jump destination must be located in the same function.
 func (cw *CodeWriter) WriteIf(label string) error {
+	// Decrement stack pointer.
+	io.WriteString(cw.output, "@SP\nM=M-1\n")
+	// Store value.
+	io.WriteString(cw.output, "A=M\nD=M\n")
+	io.WriteString(cw.output, "@"+label+"\n")
+	io.WriteString(cw.output, "D;JGT"+"\n")
 	return nil
 }
 
