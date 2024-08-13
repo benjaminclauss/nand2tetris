@@ -181,6 +181,8 @@ func (cw *CodeWriter) WriteLabel(label string) error {
 
 // WriteGoto writes assembly code that effects the goto command.
 func (cw *CodeWriter) WriteGoto(label string) error {
+	io.WriteString(cw.output, "@"+label+"\n")
+	io.WriteString(cw.output, "0;JMP\n")
 	return nil
 }
 
@@ -202,6 +204,9 @@ func (cw *CodeWriter) WriteIf(label string) error {
 }
 
 // Writes assembly code that effects the call command.
+//
+// This command effects an unconditional goto operation, causing execution to continue from the location marked by the label.
+// The jump destination must be located in the same function.
 func (cw *CodeWriter) writeCall(functionName string, numArgs int) error {
 	return nil
 }

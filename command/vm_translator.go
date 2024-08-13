@@ -73,6 +73,8 @@ func translate(outputFilename string, files ...string) error {
 				writer.WriteLabel(parser.Arg1())
 			case vm.CIf:
 				writer.WriteIf(parser.Arg1())
+			case vm.CGoTo:
+				writer.WriteGoto(parser.Arg1())
 			}
 		}
 	}
