@@ -207,17 +207,97 @@ func (cw *CodeWriter) WriteIf(label string) error {
 //
 // This command effects an unconditional goto operation, causing execution to continue from the location marked by the label.
 // The jump destination must be located in the same function.
-func (cw *CodeWriter) writeCall(functionName string, numArgs int) error {
+func (cw *CodeWriter) WriteCall(functionName string, numArgs int) error {
 	return nil
 }
 
 // Writes assembly code that effects the return command.
-func (cw *CodeWriter) WriteReturn(functionName string, numLocals int) error {
+func (cw *CodeWriter) WriteReturn() error {
+	// FRAME = LCL; FRAME is a temporary variable. (R14 is FRAME)
+	io.WriteString(cw.output, "@LCL\n")
+	io.WriteString(cw.output, "D=M\n")
+	io.WriteString(cw.output, "@14\n")
+	io.WriteString(cw.output, "M=D\n")
+	// RET = *(FRAME - 5); Put the return address in a temporary variable.
+	io.WriteString(cw.output, "@5\n")
+	io.WriteString(cw.output, "D=D-A\n")
+	io.WriteString(cw.output, "A=D\n")
+	io.WriteString(cw.output, "D=M\n")
+	io.WriteString(cw.output, "@15\n")
+	io.WriteString(cw.output, "M=D\n")
+
+	// *ARG = pop
+	// Decrement stack pointer.
+	io.WriteString(cw.output, "@SP\nM=M-1\n")
+	// Store value.
+	io.WriteString(cw.output, "A=M\nD=M\n")
+	io.WriteString(cw.output, "@ARG\n")
+	io.WriteString(cw.output, "A=M\n")
+	io.WriteString(cw.output, "M=D\n")
+
+	// SP = ARG + 1
+	io.WriteString(cw.output, "@ARG\n")
+	// TODO: Can I consolidate this to M+1?
+	io.WriteString(cw.output, "D=M\n")
+	io.WriteString(cw.output, "D=D+1\n")
+	io.WriteString(cw.output, "@SP\n")
+	io.WriteString(cw.output, "M=D\n")
+
+	// THAT = *(FRAME-1)
+	io.WriteString(cw.output, "@14\n")
+	io.WriteString(cw.output, "D=M\n")
+	io.WriteString(cw.output, "@1\n")
+	io.WriteString(cw.output, "D=D-A\n")
+	io.WriteString(cw.output, "A=D\n")
+	io.WriteString(cw.output, "D=M\n")
+	io.WriteString(cw.output, "@THAT\n")
+	io.WriteString(cw.output, "M=D\n")
+
+	// THIS = *(FRAME-2)
+	io.WriteString(cw.output, "@14\n")
+	io.WriteString(cw.output, "D=M\n")
+	io.WriteString(cw.output, "@2\n")
+	io.WriteString(cw.output, "D=D-A\n")
+	io.WriteString(cw.output, "A=D\n")
+	io.WriteString(cw.output, "D=M\n")
+	io.WriteString(cw.output, "@THIS\n")
+	io.WriteString(cw.output, "M=D\n")
+
+	// ARG = *(FRAME-3)
+	io.WriteString(cw.output, "@14\n")
+	io.WriteString(cw.output, "D=M\n")
+	io.WriteString(cw.output, "@3\n")
+	io.WriteString(cw.output, "D=D-A\n")
+	io.WriteString(cw.output, "A=D\n")
+	io.WriteString(cw.output, "D=M\n")
+	io.WriteString(cw.output, "@ARG\n")
+	io.WriteString(cw.output, "M=D\n")
+
+	// LCL = *(FRAME-4)
+	io.WriteString(cw.output, "@14\n")
+	io.WriteString(cw.output, "D=M\n")
+	io.WriteString(cw.output, "@4\n")
+	io.WriteString(cw.output, "D=D-A\n")
+	io.WriteString(cw.output, "A=D\n")
+	io.WriteString(cw.output, "D=M\n")
+	io.WriteString(cw.output, "@LCL\n")
+	io.WriteString(cw.output, "M=D\n")
+
+	// goto RET
+	io.WriteString(cw.output, "@15\n")
+	io.WriteString(cw.output, "D=M\n")
+	// “we assume that the A register has been previously set to the address to which we have to jump.”
+	io.WriteString(cw.output, "A=D\n")
+	io.WriteString(cw.output, "0;JMP\n")
 	return nil
 }
 
 // Writes assembly code that effects the function command.
 func (cw *CodeWriter) WriteFunction(functionName string, numLocals int) error {
+	io.WriteString(cw.output, fmt.Sprintf("(%s)\n", functionName))
+	// for i := 0; i < numLocals; i++ {
+	// 	cw.WritePushPop(CPush, "constant", 0)
+	// }
 	return nil
 }
 

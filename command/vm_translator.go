@@ -75,6 +75,11 @@ func translate(outputFilename string, files ...string) error {
 				writer.WriteIf(parser.Arg1())
 			case vm.CGoTo:
 				writer.WriteGoto(parser.Arg1())
+			case vm.CFuntion:
+				numLocals, _ := strconv.Atoi(parser.Arg2())
+				writer.WriteFunction(parser.Arg1(), numLocals)
+			case vm.CReturn:
+				writer.WriteReturn()
 			}
 		}
 	}
