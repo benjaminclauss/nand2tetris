@@ -52,6 +52,9 @@ func translate(outputFilename string, files ...string) error {
 	}
 	writer := vm.NewCodeWriter(output)
 
+	// TODO: Only write init if provided.
+	writer.WriteInit()
+
 	for _, file := range files {
 		vmf, err := os.Open(file)
 		if err != nil {
@@ -80,6 +83,9 @@ func translate(outputFilename string, files ...string) error {
 				writer.WriteFunction(parser.Arg1(), numLocals)
 			case vm.CReturn:
 				writer.WriteReturn()
+			case vm.CCall:
+				nArgs, _ := strconv.Atoi(parser.Arg2())
+				writer.WriteCall(parser.Arg1(), nArgs)
 			}
 		}
 	}
