@@ -8,6 +8,7 @@ import (
 )
 
 // A CodeWriter translates VM commands into Hack assembly code.
+// The VM represents true. and false. as -1 (minus one, 0xFFFF) and 0 (zero, 0x0000), respectively.
 type CodeWriter struct {
 	output              io.WriteCloser
 	boolean             int
@@ -22,8 +23,6 @@ func NewCodeWriter(output io.WriteCloser) *CodeWriter {
 
 // SetFileName informs the CodeWriter that the translation of a new VM file is started.
 func (cw *CodeWriter) SetFileName(filename string) {}
-
-// The VM represents true. and false. as -1 (minus one, 0xFFFF) and 0 (zero, 0x0000), respectively.
 
 // WriteArithmetic writes the assembly code that is the translation of the given arithmetic command.
 func (cw *CodeWriter) WriteArithmetic(command string) {
@@ -210,7 +209,7 @@ func (cw *CodeWriter) WriteIf(label string) error {
 	return cw.WriteLine("@" + cw.currentFunctionName + "$" + label + "\nD;JNE\n")
 }
 
-// Writes assembly code that effects the call command.
+// WriteCall writes assembly code that effects the call command.
 //
 // This command effects an unconditional goto operation, causing execution to continue from the location marked by the label.
 // The jump destination must be located in the same function.
@@ -234,7 +233,7 @@ func (cw *CodeWriter) WriteCall(functionName string, numArgs int) error {
 	return nil
 }
 
-// Writes assembly code that effects the return command.
+// WriteReturn writes assembly code that effects the return command.
 func (cw *CodeWriter) WriteReturn() error {
 	cw.WriteLine("@LCL\nD=M\n@5\nA=D-A\nD=M\n@R13\nM=D\n" +
 		"@SP\nA=M-1\nD=M\n@ARG\nA=M\nM=D\n" +
@@ -324,7 +323,7 @@ func (cw *CodeWriter) WriteReturn() error {
 	// return nil
 }
 
-// Writes assembly code that effects the function command.
+// WriteFunction writes assembly code that effects the function command.
 func (cw *CodeWriter) WriteFunction(functionName string, numLocals int) error {
 	cw.currentFunctionName = functionName
 	s := "(" + functionName + ")\n@SP\nA=M\n"
