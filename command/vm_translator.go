@@ -12,37 +12,44 @@ import (
 	vm "github.com/benjaminclauss/nand2tetris/virtualmachine"
 )
 
-var vmTranslatorCommand = &cobra.Command{
-	Use: "vmtranslator <source>",
-	Long: `
+func NewVMTranslatorCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use: "vmtranslator <source>",
+		Long: `
 The VM translator accepts a single command line parameter, as follows:
 
 prompt> VMtranslator source
 
 Where source is either a file name of the form Xxx.vm (the extension is mandatory)
 or a directory name containing one or more .vm files (in which case there is no extension).
+
+The result of the translation is always a single assembly language file named Xxx.asm, 
+created in the same directory as the input Xxx. 
 	`,
-	Args: cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		info, err := os.Stat(args[0])
-		if err != nil {
-			return fmt.Errorf("error getting FileInfo: %w", err)
-		}
-		if info.IsDir() {
-			entries, err := os.ReadDir(args[0])
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			info, err := os.Stat(args[0])
 			if err != nil {
-				return err
+				return fmt.Errorf("error getting FileInfo: %w", err)
 			}
-			var vmFiles []string
-			for _, entry := range entries {
-				if strings.HasSuffix(entry.Name(), ".vm") {
-					vmFiles = append(vmFiles, filepath.Join(args[0]+"/", entry.Name()))
+			if info.IsDir() {
+				entries, err := os.ReadDir(args[0])
+				if err != nil {
+					return err
 				}
+				var vmFiles []string
+				for _, entry := range entries {
+					if strings.HasSuffix(entry.Name(), ".vm") {
+						vmFiles = append(vmFiles, filepath.Join(args[0]+"/", entry.Name()))
+					}
+				}
+				return translate(info.Name()+".asm", vmFiles...)
 			}
-			return translate(info.Name()+".asm", vmFiles...)
-		}
-		return translate(strings.TrimRight(filepath.Base(args[0]), ".vm")+".asm", args[0])
-	},
+			return translate(strings.TrimRight(filepath.Base(args[0]), ".vm")+".asm", args[0])
+		},
+	}
+
+	return cmd
 }
 
 func translate(outputFilename string, files ...string) error {
@@ -53,7 +60,7 @@ func translate(outputFilename string, files ...string) error {
 	writer := vm.NewCodeWriter(output)
 
 	// TODO: Only write init if provided.
-	writer.WriteInit()
+	//writer.WriteInit()
 
 	for _, file := range files {
 		vmf, err := os.Open(file)
