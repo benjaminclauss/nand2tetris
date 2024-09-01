@@ -59,10 +59,18 @@ func translate(outputFilename string, files ...string) error {
 	}
 	writer := vm.NewCodeWriter(output)
 
-	// TODO: Only write init if provided.
-	//writer.WriteInit()
+	init := false
+	for _, filename := range files {
+		if strings.HasSuffix(filename, "Sys.vm") {
+			init = true
+		}
+	}
+	if init {
+		writer.WriteInit()
+	}
 
 	for _, file := range files {
+		writer.SetFilename(file)
 		vmf, err := os.Open(file)
 		if err != nil {
 			return err

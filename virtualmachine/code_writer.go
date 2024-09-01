@@ -2,6 +2,7 @@ package virtualmachine
 
 import (
 	"io"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -14,6 +15,7 @@ type CodeWriter struct {
 	boolean             int
 	returnLabelCount    int
 	currentFunctionName string
+	currentFilename     string
 }
 
 // NewCodeWriter opens the output stream and gets ready to write to it.
@@ -21,8 +23,10 @@ func NewCodeWriter(output io.WriteCloser) *CodeWriter {
 	return &CodeWriter{output: output, returnLabelCount: 1}
 }
 
-// SetFileName informs the CodeWriter that the translation of a new VM file is started.
-func (cw *CodeWriter) SetFileName(filename string) {}
+// SetFilename informs the CodeWriter that the translation of a new VM file is started.
+func (cw *CodeWriter) SetFilename(filename string) {
+	cw.currentFilename = filename
+}
 
 // WriteArithmetic writes the assembly code that is the translation of the given arithmetic command.
 func (cw *CodeWriter) WriteArithmetic(command string) {
@@ -66,16 +70,9 @@ func (cw *CodeWriter) writeComparison(command string) {
 		"M=-1\n("+comp+".after."+count+")\n")
 }
 
-// Stage II: Memory Access Commands The next version of your translator should include a full implementation of the VM language’s push and
-// pop commands, handling all eight memory segments. We suggest breaking this stage into the following substages:
-// 0. You have already handled the constant segment.
-// 1. Next, handle the segments local, argument, this, and that.
-// 2. Next, handle the pointer and temp segments, in particular allowing modification of the bases of the this and that segments.
-// 3. Finally, handle the static segment.
-
 // WritePushPop writes the assembly code that is the translation of the given command where command is either CPush or CPop.
-// TODO: Dry.
 func (cw *CodeWriter) WritePushPop(command CommandType, segment string, index int) {
+	// TODO: Dry.
 	if command == CPush {
 		if segment == "constant" {
 			// Store constant in register.
@@ -114,7 +111,10 @@ func (cw *CodeWriter) WritePushPop(command CommandType, segment string, index in
 		}
 		if segment == "static" {
 			// Get address of segment.
-			io.WriteString(cw.output, "@Static."+strconv.Itoa(index)+"\n")
+			// Each static variable j in a VM file Xxx. vm is translated into the assembly symbol Xxx.j.
+			// In the subsequent assembly process, these symbolic variables will be allocated RAM space by the Hack assembler.
+			filename := strings.TrimRight(filepath.Base(cw.currentFilename), ".vm")
+			io.WriteString(cw.output, "@"+filename+"."+strconv.Itoa(index)+"\n")
 			io.WriteString(cw.output, "D=M\n")
 			// Push value to stack.
 			io.WriteString(cw.output, "@SP\n")
@@ -156,7 +156,10 @@ func (cw *CodeWriter) WritePushPop(command CommandType, segment string, index in
 			// Store value.
 			io.WriteString(cw.output, "A=M\nD=M\n")
 			// Point at segment.
-			io.WriteString(cw.output, "@Static."+strconv.Itoa(index)+"\n")
+			// Each static variable j in a VM file Xxx. vm is translated into the assembly symbol Xxx.j.
+			// In the subsequent assembly process, these symbolic variables will be allocated RAM space by the Hack assembler.
+			filename := strings.TrimRight(filepath.Base(cw.currentFilename), ".vm")
+			io.WriteString(cw.output, "@"+filename+"."+strconv.Itoa(index)+"\n")
 			// Save value.
 			io.WriteString(cw.output, "M=D\n")
 		}
@@ -181,12 +184,12 @@ func (cw *CodeWriter) WriteLine(s string) error {
 	return err
 }
 
-// WriteLabel writes assembly code that effects the label command.
+// WriteLabel writes assembly code that effects the `label` command.
 func (cw *CodeWriter) WriteLabel(label string) error {
 	return cw.WriteLine("(" + cw.currentFunctionName + "$" + label + ")\n")
 }
 
-// WriteGoto writes assembly code that effects the goto command.
+// WriteGoto writes assembly code that effects the `goto` command.
 func (cw *CodeWriter) WriteGoto(label string) error {
 	return cw.WriteLine("@" + cw.currentFunctionName + "$" + label + "\n0;JMP\n")
 }
