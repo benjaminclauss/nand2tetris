@@ -2,9 +2,10 @@ package command
 
 import "github.com/spf13/cobra"
 
-var RootCmd = &cobra.Command{Use: "nand2tetris"}
+func NewRootCommand() *cobra.Command {
+	cmd := &cobra.Command{Use: "nand2tetris"}
+	cmd.AddCommand(assemblerCmd)
+	cmd.AddCommand(vmTranslatorCommand)
 
-func init() {
-	RootCmd.AddCommand(assemblerCmd)
-	RootCmd.AddCommand(vmTranslatorCommand)
+	return cmd
 }
