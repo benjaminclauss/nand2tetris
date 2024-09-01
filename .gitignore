@@ -1,3 +1,9 @@
 .DS_Store
 .idea
 nand2tetris
+
+BasicLoop.asm
+FibonacciSeries.asm
+SimpleFunction.asm
+FibonacciElement.asm
+StaticsTest.asm
