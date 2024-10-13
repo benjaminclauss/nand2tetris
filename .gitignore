@@ -7,3 +7,6 @@ FibonacciSeries.asm
 SimpleFunction.asm
 FibonacciElement.asm
 StaticsTest.asm
+
+# Ignore all compiled .vm files for Jack programs for Project 9.
+9/**/*.vm
